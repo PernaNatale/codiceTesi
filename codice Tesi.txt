@@ -1,95 +1,24 @@
-CON UTILIZZO LIBRERIA VADER
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import re
 
-def punteggio_offensività(frase):
-    # Inizializza l'analizzatore di sentimenti di VADER
+def calcola_offensivita(frase):
+    parole_chiave = ["no", "don't", "thanks", "thank you", "i prefer", "like", "i rather"]
     analyzer = SentimentIntensityAnalyzer()
-    
-    # Ottieni i punteggi di polarità per la frase
-    sentiment = analyzer.polarity_scores(frase)
-    
-    # Verifica la lunghezza della frase e aggiungi 1 al punteggio finale se è più lunga di quattro parole
-    if len(re.findall(r'\w+', frase)) > 4:
-        score_modifier = 1
+    punteggio = analyzer.polarity_scores(frase)['compound']*-3
+    parole_presenti = sum(1 for parola in parole_chiave if parola in frase)
+    if parole_presenti >= 3:
+        punteggio += 1
     else:
-        score_modifier = 0
-    
-    # Calcola il punteggio di offensività basato sul punteggio di polarità e il modificatore di punteggio
-    if sentiment['compound'] >= -1.0 and sentiment['compound'] < -0.6:
-        return 1 + score_modifier
-    elif sentiment['compound'] >= -0.6 and sentiment['compound'] < -0.2:
-        return 2 + score_modifier
-    elif sentiment['compound'] >= -0.2 and sentiment['compound'] < 0.2:
-        return 3 + score_modifier
-    elif sentiment['compound'] >= 0.2 and sentiment['compound'] < 0.6:
-        return 4 + score_modifier
-    elif sentiment['compound'] >= 0.6 and sentiment['compound'] <= 1.0:
-        return 5 + score_modifier
+        punteggio += 0
+    lunghezza_frase = len(re.findall(r'\w+', frase))
+    if lunghezza_frase >= 4:
+        punteggio += 0.4
     else:
-        return "Impossibile valutare l'offensività della frase"
+        punteggio += 0
+    return punteggio
 
-# Esempio di utilizzo
-frase = "Sei una persona terribile."
-punteggio = punteggio_offensività(frase)
-print("Punteggio di offensività della frase:", punteggio)
+frase_da_valutare = "I don't like discounts"
 
-CON UTILIZZO LIBRERIA VADER E BEATIFULSOUP
+valore_offensivita = calcola_offensivita(frase_da_valutare.lower())
 
-
-from bs4 import BeautifulSoup
-import requests
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-import re
-
-def punteggio_offensività(frase):
-    # Inizializza l'analizzatore di sentimenti di VADER
-    analyzer = SentimentIntensityAnalyzer()
-    
-    # Ottieni i punteggi di polarità per la frase
-    sentiment = analyzer.polarity_scores(frase)
-    
-    # Verifica la lunghezza della frase e aggiungi 1 al punteggio finale se è più lunga di quattro parole
-    if len(re.findall(r'\w+', frase)) > 4:
-        score_modifier = 1
-    else:
-        score_modifier = 0
-    
-    # Calcola il punteggio di offensività basato sul punteggio di polarità e il modificatore di punteggio
-    if sentiment['compound'] >= -1.0 and sentiment['compound'] < -0.6:
-        return 1 + score_modifier
-    elif sentiment['compound'] >= -0.6 and sentiment['compound'] < -0.2:
-        return 2 + score_modifier
-    elif sentiment['compound'] >= -0.2 and sentiment['compound'] < 0.2:
-        return 3 + score_modifier
-    elif sentiment['compound'] >= 0.2 and sentiment['compound'] < 0.6:
-        return 4 + score_modifier
-    elif sentiment['compound'] >= 0.6 and sentiment['compound'] <= 1.0:
-        return 5 + score_modifier
-    else:
-        return "Impossibile valutare l'offensività della frase"
-
-# Funzione per ottenere il testo dai tag button e checkbox di una pagina web
-def estrai_testo_da_sito(url):
-    response = requests.get(url)
-    soup = BeautifulSoup(response.text, 'html.parser')
-    # Trova tutti i tag button e checkbox e ottieni il testo al loro interno
-    buttons = [button.text.strip() for button in soup.find_all('button')]
-    checkboxes = [checkbox.text.strip() for checkbox in soup.find_all('input', {'type': 'checkbox'})]
-    return buttons, checkboxes
-
-# Esempio di utilizzo
-url = "https://example.com"  # Inserisci l'URL del sito da cui desideri estrarre il testo
-buttons, checkboxes = estrai_testo_da_sito(url)
-
-# Analizza il testo dei bottoni
-for button_text in buttons:
-    punteggio = punteggio_offensività(button_text)
-    print("Punteggio di offensività per il testo del bottone '{}': {}".format(button_text, punteggio))
-
-# Analizza il testo delle checkbox
-for checkbox_text in checkboxes:
-    punteggio = punteggio_offensività(checkbox_text)
-    print("Punteggio di offensività per il testo della checkbox '{}': {}".format(checkbox_text, punteggio))
-
-
+print(f'La frase "{frase_da_valutare}" ha un valore di offensività pari a: {valore_offensivita}')
